@@ -9,34 +9,46 @@ import java.nio.file.StandardOpenOption;
 
 public class WorkWithFile {
     public void getStatistic(String fromFileName, String toFileName) {
-        Path path = new File(fromFileName).toPath();
-        int supplyTotal = 0;
-        int buyTotal = 0;
+        Path filePath = new File(fromFileName).toPath();
 
+        createNewFile(toFileName);
+
+        int supplyTotal = countFieldValueFromCsvFile(CsvFields.supply, filePath);
+        int buyTotal = countFieldValueFromCsvFile(CsvFields.buy, filePath);
+
+        writeResultToTheFile(supplyTotal, buyTotal, new File(toFileName).toPath());
+    }
+
+    private void createNewFile(String fileName) {
         try {
-            Files.deleteIfExists(Paths.get(toFileName));
-            new File(toFileName).createNewFile();
+            Files.deleteIfExists(Paths.get(fileName));
+            new File(fileName).createNewFile();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private int countFieldValueFromCsvFile(CsvFields field, Path filePath) {
+        int fieldTotal = 0;
 
         try {
-            String[] lineList = Files.readAllLines(path).toArray(new String[0]);
+            String[] fileContent = Files.readAllLines(filePath).toArray(new String[0]);
 
-            for (String line : lineList) {
+            for (String line : fileContent) {
                 String[] fields = line.split(",");
-                if (fields[0].equals(CsvFields.supply.name())) {
-                    supplyTotal += Integer.parseInt(fields[1]);
-                } else {
-                    buyTotal += Integer.parseInt(fields[1]);
+                if (fields[0].equals(field.name())) {
+                    fieldTotal += Integer.parseInt(fields[1]);
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Can't read the file " + fromFileName, e);
+            throw new RuntimeException("Can't read the file " + filePath, e);
         }
 
+        return fieldTotal;
+    }
+
+    private void writeResultToTheFile(int supplyTotal, int buyTotal, Path newFilePath) {
         CsvFields[] fieldsList = CsvFields.values();
-        Path newFilePath = new File(toFileName).toPath();
 
         for (CsvFields field : fieldsList) {
             switch (field) {
