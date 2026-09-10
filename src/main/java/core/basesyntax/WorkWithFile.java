@@ -26,7 +26,7 @@ public class WorkWithFile {
             Files.deleteIfExists(Paths.get(fileName));
             new File(fileName).createNewFile();
         } catch (IOException e) {
-            throw new RuntimeException( "Can't creat the file " + fileName, e);
+            throw new RuntimeException("Can't create the file " + fileName, e);
         }
     }
 
