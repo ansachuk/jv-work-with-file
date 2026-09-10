@@ -8,6 +8,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class WorkWithFile {
+    public static final String CSV_DELIMITER = ",";
+
     public void getStatistic(String fromFileName, String toFileName) {
         Path filePath = new File(fromFileName).toPath();
 
@@ -24,7 +26,7 @@ public class WorkWithFile {
             Files.deleteIfExists(Paths.get(fileName));
             new File(fileName).createNewFile();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException( "Can't creat the file " + fileName, e);
         }
     }
 
@@ -35,7 +37,7 @@ public class WorkWithFile {
             String[] fileContent = Files.readAllLines(filePath).toArray(new String[0]);
 
             for (String line : fileContent) {
-                String[] fields = line.split(",");
+                String[] fields = line.split(CSV_DELIMITER);
                 if (fields[0].equals(field.name())) {
                     fieldTotal += Integer.parseInt(fields[1]);
                 }
@@ -68,12 +70,12 @@ public class WorkWithFile {
         try {
             Files.write(path,
                     (fieldToWrite
-                            + ","
+                            + CSV_DELIMITER
                             + valueToWrite)
                             .getBytes(),
                     StandardOpenOption.APPEND);
         } catch (IOException e) {
-            throw new RuntimeException("Can't write to the file", e);
+            throw new RuntimeException("Can't write to the file" + path, e);
         }
     }
 }
