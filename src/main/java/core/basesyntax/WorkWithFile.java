@@ -1,81 +1,63 @@
 package core.basesyntax;
 
-import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 
 public class WorkWithFile {
+    public static final String CSV_SUPPLY = "supply";
+    public static final String CSV_BUY = "buy";
+    public static final String CSV_RESULT = "result";
     public static final String CSV_DELIMITER = ",";
 
     public void getStatistic(String fromFileName, String toFileName) {
-        Path filePath = new File(fromFileName).toPath();
-
-        createNewFile(toFileName);
-
-        int supplyTotal = countFieldValueFromCsvFile(CsvFields.supply, filePath);
-        int buyTotal = countFieldValueFromCsvFile(CsvFields.buy, filePath);
-
-        writeResultToTheFile(supplyTotal, buyTotal, new File(toFileName).toPath());
+        String[] fileContent = readFile(Paths.get(fromFileName));
+        String result = getResult(fileContent);
+        writeToFile(result, toFileName);
     }
 
-    private void createNewFile(String fileName) {
-        try {
-            Files.deleteIfExists(Paths.get(fileName));
-            new File(fileName).createNewFile();
-        } catch (IOException e) {
-            throw new RuntimeException("Can't create the file " + fileName, e);
-        }
-    }
-
-    private int countFieldValueFromCsvFile(CsvFields field, Path filePath) {
-        int fieldTotal = 0;
+    public String[] readFile(Path filePath) {
+        String[] fileContent;
 
         try {
-            String[] fileContent = Files.readAllLines(filePath).toArray(new String[0]);
-
-            for (String line : fileContent) {
-                String[] fields = line.split(CSV_DELIMITER);
-                if (fields[0].equals(field.name())) {
-                    fieldTotal += Integer.parseInt(fields[1]);
-                }
-            }
+            fileContent = Files.readAllLines(filePath).toArray(new String[0]);
         } catch (IOException e) {
             throw new RuntimeException("Can't read the file " + filePath, e);
         }
 
-        return fieldTotal;
+        return fileContent;
+
     }
 
-    private void writeResultToTheFile(int supplyTotal, int buyTotal, Path newFilePath) {
-        CsvFields[] fieldsList = CsvFields.values();
+    public String getResult(String[] fileContent) {
+        StringBuilder sb = new StringBuilder();
+        int supplyTotal = 0;
+        int buyTotal = 0;
 
-        for (CsvFields field : fieldsList) {
-            switch (field) {
-                case supply:
-                    writeToTheFile(newFilePath, field.name(), supplyTotal);
-                    break;
-                case buy:
-                    writeToTheFile(newFilePath, "\n" + field.name(), buyTotal);
-                    break;
-                default:
-                    writeToTheFile(newFilePath, "\n" + field.name(), supplyTotal - buyTotal);
+        for (String line : fileContent) {
+            String[] fields = line.split(CSV_DELIMITER);
+            if (fields[0].equals(CSV_SUPPLY)) {
+                supplyTotal += Integer.parseInt(fields[1]);
+            } else {
+                buyTotal += Integer.parseInt(fields[1]);
             }
         }
+
+        sb.append(CSV_SUPPLY).append(CSV_DELIMITER).append(supplyTotal).append("\n")
+                .append(CSV_BUY).append(CSV_DELIMITER).append(buyTotal).append("\n")
+                .append(CSV_RESULT).append(CSV_DELIMITER).append(supplyTotal - buyTotal);
+
+        return sb.toString();
     }
 
-    private void writeToTheFile(Path path, String fieldToWrite, int valueToWrite) {
-        try {
-            Files.write(path,
-                    (fieldToWrite
-                            + CSV_DELIMITER
-                            + valueToWrite)
-                            .getBytes(),
-                    StandardOpenOption.APPEND);
+    public void writeToFile(String result, String toFileName) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(toFileName))) {
+            bw.write(result);
         } catch (IOException e) {
-            throw new RuntimeException("Can't write to the file" + path, e);
+            throw new RuntimeException("Can't write to the file" + toFileName, e);
         }
     }
 }
